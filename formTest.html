@@ -1,124 +1,167 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-    <head>
-        <script type="text/javascript" src="./formSubmit.js"></script>        
-    </head>
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            font-family: sans-serif;
-            padding: 1rem;
-            background: #ccc;
-        }
-        input[type=radio]::before {
-            content: '';
-        }
-        #formContainer {
-            display: flex;
-            justify-content: space-evenly;
-        }
-        #testForm, #testFormTwo {
-            max-width: 50%;
-            border: 1px solid black;
-        }
-        .errortext {
-            color: red;
-        }
-    </style>
-    <body>
-        <div id="formContainer">
-            <form id="testForm" name="testForm">
-                <div><h1>NATIVE HTML INPUTS</h1></div>
-                <div><input name="color"type="color">Color</div>
-                <div><input name="date" type="date">Date</div>
-                <div><input name="datetime-local" type="datetime-local">Datetime-local</div>
-                <div><input name="email" type="email">Email</div>
-                <div><input name="file" type="file">File</div>
-                <div><input name="fileMultiple" type="file" multiple accept="*">File Multiple</div>
-                <div><input name="month" type="month">Month</div>
-                <div><input name="number" required type="number">Number *required</div>
-                <div><input name="password" type="password">Password</div>
-                <div><input name="range" type="range">Range</div>
-                <div><input name="search" type="search">Search</div>
-                <div><input name="tel" type="tel">Tel</div>
-                <div><input name="time" type="time">Time</div>
-                <div><input name="url" type="url">URL</div>
-                <div><input name="week" type="week">Week</div>
-                <div><input name="text" type="text">Text</div>
-                <div><input name="text2" type="text" required>Text *with required</div>
-                <div>
-                    <div>
-                        <input name="radio1" required type="radio" value="1"><label>Radio1 *required</label>
-                    </div>
-                    <div>
-                        <input name="radio2" type="radio" value="2"><label>Radio2</label>
-                    </div>
-                    <div>
-                        <input name="radio3" type="radio" value="3"><label>Radio3</label>
-                    </div>
-                </div>
-                <div>
-                    <input name="checkbox1" type="checkbox" required value="N">Checkbox1 *required
-                    <input name="checkbox2" type="checkbox" value="Y">Checkbox2
-                    <input name="checkbox3" type="checkbox" value="1">Checkbox3
-                </div>
-                <div><input name="hidden" type="hidden">Hidden</div>
-                <div>
-                    <select name="single">
-                        <option value="">Choose...</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                    </select>Single select
-                </div>
-                <div>
-                    <select name="multiple" multiple>
-                        <option value="">Choose...</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                    </select>Multi-select
-                </div>
-                <div><textarea name="textarea"></textarea></div>
-                <div>Native button types
-                    <input type="reset">Reset
-                    <input type="submit">Submit<br/>
-                    <input type="image">Image (yes image, used to create a submit button from an image)
-                </div>
-            </form>
-            <form id="testFormTwo" name="testFormTwo">                
-                <div><h1>Non-Native Data-types</h1></div>
-                <div><input>No Assigned Type, defaults to text</div>
-                <div><input name="alpha" type="text" data-type="alpha">Alpha</div>
-                <div><input name="int" type="text" data-type="int">Int</div>
-                <div><input name="float" type="text" data-type="float">Float</div>
-                <div><input name="currency" type="text" data-type="currency">Currency</div>
-                <div><input name="zipcode" type="text" data-type="zipcode">Zipcode</div>
-                <div><input name="zip" type="text" data-type="zip">Zip</div>
-                <div><input name="zip4" type="text" data-type="zip4">Zip4</div>
-                <div><input name="zipFull" type="text" data-type="zipFull">ZipFull</div>
-                <div><input name="urlHttp" type="text" data-type="urlHttp">urlHttp</div>
-                <div><input name="urlPart" type="text" data-type="urlPart">urlPart</div>
-                <div><input name="hostname" type="text" data-type="hostname">Hostname</div>
-                <div><input name="domain" type="text" data-type="domain">domain</div>
-                <div><input name="ip" type="text" data-type="ip">IP</div>
-                <div><input name="timestamp" type="text" data-type="timestamp">Timestamp</div>
-                <div><input name="mmddyyyy" type="text" data-type="datemmddyyyy">datemmddyyyy</div>
-                <div><input name="yyyymmdd" type="text" data-type="dateyyyymmdd">dateyyyymmdd</div>
-                <div><input name="routing" type="text" data-type="routing">Routing</div>
-                <div><input name="cc" type="text" data-type="cc">Credit Card</div>
-                <div><input name="cvv" type="text" data-type="cvv">CVV</div>
-                <div><input name="ssn" type="text" data-type="ssn">SSN</div>
-                <div><input type="text" name="parcel" required data-type="parcel">Parcel</div>
-                <div><hr/></div>
-                <div>Native button types
-                    <input type="reset">Reset
-                    <input type="submit">Submit<br/>
-                    <input type="image">Image (yes image, used to create a submit button from an image)
-                </div>
-            </form>
+  <head>
+    <script type="text/javascript" src="./formSubmit.js"></script>
+  </head>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      font-family: sans-serif;
+      padding: 1rem;
+      background: #ccc;
+    }
+    input[type="radio"]::before {
+      content: "";
+    }
+    #formContainer {
+      display: flex;
+      justify-content: space-evenly;
+    }
+    #testForm,
+    #testFormTwo {
+      max-width: 50%;
+      border: 1px solid black;
+    }
+    .errortext {
+      color: red;
+    }
+  </style>
+  <body>
+    <div id="formContainer">
+      <form id="testForm" name="testForm">
+        <div><h1>NATIVE HTML INPUTS</h1></div>
+        <div><input name="color" type="color" />Color</div>
+        <div><input name="date" type="date" />Date</div>
+        <div>
+          <input name="datetime-local" type="datetime-local" />Datetime-local
         </div>
-    </body>
+        <div><input name="email" type="email" />Email</div>
+        <div><input name="file" type="file" />File</div>
+        <div>
+          <input name="fileMultiple" type="file" multiple accept="*" />File
+          Multiple
+        </div>
+        <div><input name="month" type="month" />Month</div>
+        <div>
+          <input name="number" required type="number" />Number *required
+        </div>
+        <div><input name="password" type="password" />Password</div>
+        <div><input name="range" type="range" />Range</div>
+        <div><input name="search" type="search" />Search</div>
+        <div><input name="tel" type="tel" />Tel</div>
+        <div><input name="time" type="time" />Time</div>
+        <div><input name="url" type="url" />URL</div>
+        <div><input name="week" type="week" />Week</div>
+        <div><input name="text" type="text" />Text</div>
+        <div>
+          <input name="text2" type="text" required />Text *with required
+        </div>
+        <div>
+          <div>
+            <input name="radio1" required type="radio" value="1" /><label
+              >Radio1 *required</label
+            >
+          </div>
+          <div>
+            <input name="radio2" type="radio" value="2" /><label>Radio2</label>
+          </div>
+          <div>
+            <input name="radio3" type="radio" value="3" /><label>Radio3</label>
+          </div>
+        </div>
+        <div>
+          <input name="checkbox1" type="checkbox" required value="N" />Checkbox1
+          *required
+          <input name="checkbox2" type="checkbox" value="Y" />Checkbox2
+          <input name="checkbox3" type="checkbox" value="1" />Checkbox3
+        </div>
+        <div><input name="hidden" type="hidden" />Hidden</div>
+        <div>
+          <select name="single">
+            <option value="">Choose...</option>
+            <option value="1">1</option>
+            <option value="2">2</option></select
+          >Single select
+        </div>
+        <div>
+          <select name="multiple" multiple>
+            <option value="">Choose...</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option></select
+          >Multi-select
+        </div>
+        <div><textarea name="textarea"></textarea></div>
+        <div>
+          Native button types <input type="reset" />Reset
+          <input type="submit" />Submit<br />
+          <input type="image" />Image
+        </div>
+      </form>
+      <form id="testFormTwo" name="testFormTwo">
+        <div><h1>Non-Native Data-types</h1></div>
+        <div><input />No Assigned Type, defaults to text</div>
+        <div><input name="alpha" type="text" data-type="alpha" />Alpha</div>
+        <div><input name="int" type="text" data-type="int" />Int</div>
+        <div><input name="float" type="text" data-type="float" />Float</div>
+        <div>
+          <input name="currency" type="text" data-type="currency" />Currency
+        </div>
+        <div>
+          <input name="zipcode" type="text" data-type="zipcode" />Zipcode
+        </div>
+        <div><input name="zip" type="text" data-type="zip" />Zip</div>
+        <div><input name="zip4" type="text" data-type="zip4" />Zip4</div>
+        <div>
+          <input name="zipFull" type="text" data-type="zipFull" />ZipFull
+        </div>
+        <div>
+          <input name="urlHttp" type="text" data-type="urlHttp" />urlHttp
+        </div>
+        <div>
+          <input name="urlPart" type="text" data-type="urlPart" />urlPart
+        </div>
+        <div>
+          <input name="hostname" type="text" data-type="hostname" />Hostname
+        </div>
+        <div><input name="domain" type="text" data-type="domain" />domain</div>
+        <div><input name="ip" type="text" data-type="ip" />IP</div>
+        <div>
+          <input name="timestamp" type="text" data-type="timestamp" />Timestamp
+        </div>
+        <div>
+          <input
+            name="mmddyyyy"
+            type="text"
+            data-type="datemmddyyyy"
+          />datemmddyyyy
+        </div>
+        <div>
+          <input
+            name="yyyymmdd"
+            type="text"
+            data-type="dateyyyymmdd"
+          />dateyyyymmdd
+        </div>
+        <div>
+          <input name="routing" type="text" data-type="routing" />Routing
+        </div>
+        <div><input name="cc" type="text" data-type="cc" />Credit Card</div>
+        <div><input name="cvv" type="text" data-type="cvv" />CVV</div>
+        <div><input name="ssn" type="text" data-type="ssn" />SSN</div>
+        <div>
+          <input type="text" name="parcel" required data-type="parcel" />Parcel
+        </div>
+        <div><hr /></div>
+        <div>
+          Native button types <input type="reset" />Reset
+          <input type="submit" />Submit<br />
+          <input type="image" />Image
+        </div>
+      </form>
+    </div>
+  </body>
 </html>
