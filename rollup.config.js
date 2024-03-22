@@ -30,11 +30,6 @@ export default {
       format: 'umd', // UMD format
       sourcemap: true,
       name: 'FormSubmit',
-      globals: {
-        // Specify global variable names for external modules
-        react: 'React',
-        'react-dom': 'ReactDOM',
-      },
       plugins: [terser()], //minify code
     },
     {
@@ -72,10 +67,10 @@ export default {
       minimize: true, // Minify CSS
       extensions: ['.css'], // Process CSS files
     }),
-    replace({
-      preventAssignment: true, // Disable
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
-    }),
+    // replace({
+    //   preventAssignment: true, // Disable
+    //   'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
+    // }),
     del({
       targets: ['dist/**/*.d.ts'], //excludes type definition files from production build
     }),
