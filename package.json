@@ -1,5 +1,5 @@
 {
-  "name": "formSubmit",
+  "name": "formsubmit",
   "version": "1.0.0",
   "description": "Form validation",
   "main": "./dist/index.js",
