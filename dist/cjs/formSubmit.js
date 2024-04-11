@@ -284,7 +284,7 @@ const handleFormSubmit = (ev) => {
 };
 const isValid = (el) => {
     const tag = el.tagName.toLowerCase();
-    const type = (el.dataset.type || el.type).toLowerCase() === 'true'
+    (el.dataset.type || el.type).toLowerCase() === 'true'
         ? 'text'
         : (el.dataset.type || el.type).toLowerCase();
     if (el instanceof HTMLFormElement) {
@@ -292,16 +292,18 @@ const isValid = (el) => {
         let isFormValid = true;
         inputs.forEach((input) => {
             const { required, name } = input;
+            const type = resolveType(input);
             const isValidInput = isValid(input);
             isValidInput
-                ? console.log(`Input Name: ${name}\r\nInput Type: ${type}\r\nRequired: ${required}\r\nisValid: ${isValid}`)
-                : console.error(`Input Name: ${name}\r\nInput Type: ${type}\r\nRequired: ${required}\r\nisValid: ${isValid}`);
+                ? console.log(`Input Name: ${name}\r\nInput Type: ${type}\r\nRequired: ${required}\r\nisValid: ${isValid} \r\nDepricated form-submit-required: ${input.dataset.formSubmitRequired}`)
+                : console.error(`Input Name: ${name}\r\nInput Type: ${type}\r\nRequired: ${required}\r\nisValid: ${isValid} \r\nDepricated form-submit-required: ${input.dataset.formSubmitRequired}`);
             if (!isValidInput)
                 isFormValid = false;
         });
         return isFormValid;
     }
     else {
+        const type = resolveType(el);
         if (!type) {
             throw new Error(`Invalid Element Type: ${tag}\r\nValid input elements only`);
         }
@@ -319,9 +321,7 @@ const checkAllValidity = () => {
     forms.forEach((form) => {
         const inputs = Array.from(form.querySelectorAll('input:not([type=button]):not([type=reset]):not([type=submit]):not([type=image]),select,textarea'));
         inputs.forEach((input) => {
-            const { type, dataset } = input;
-            const { type: dataType } = dataset;
-            const resolvedType = (dataType || type).toLowerCase() === 'true' ? 'text' : (dataType || type).toLowerCase();
+            const resolvedType = resolveType(input);
             inputTypes[resolvedType].value.test(input.value)
                 ? validInputs.push(input)
                 : invalidInputs.push(input);
@@ -335,17 +335,17 @@ const checkAllValidity = () => {
     console.groupEnd();
     return;
 };
+const resolveType = (el) => (el.dataset.formSubmitRequired || el.dataset.formSubmitOptional || el.dataset.type || el.type) ===
+    'true'
+    ? 'text'
+    : el.dataset.formSubmitRequired || el.dataset.formSubmitOptional || el.dataset.type || el.type;
 const inputEventHandler = (ev) => {
     const { target } = ev;
     if (target) {
         if (target instanceof HTMLSelectElement)
             handleSelect(target);
         if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
-            const { type, dataset } = target;
-            const { type: dataType } = dataset;
-            const resolvedType = (dataType || type) === 'true'
-                ? (dataType || type).toLowerCase()
-                : (dataType || type).toLowerCase();
+            const resolvedType = resolveType(target);
             if (['radio', 'checkbox'].includes(resolvedType) &&
                 !(target instanceof HTMLTextAreaElement)) {
                 handleRadiosCheckboxes(target);
@@ -363,13 +363,13 @@ const inputEventHandler = (ev) => {
 const handleSelect = (input, cb) => {
     const { required, multiple } = input;
     const selections = input.selectedOptions;
-    const type = input.dataset.type || input.type || multiple ? 'select-multiple' : 'select-one';
+    const type = resolveType(input);
     const val = multiple
         ? Array.from(selections)
             .map((selection) => selection.value)
             .join(',')
         : selections[0].value;
-    const valid = required ? (val ? true : false) : true;
+    const valid = input.dataset.formSubmitRequired || required ? (val ? true : false) : true;
     const parent = input.parentNode;
     if (!valid && !cb) {
         if (parent) {
@@ -378,7 +378,8 @@ const handleSelect = (input, cb) => {
             }
             const inputErrorField = parent.querySelector(errClassSelector);
             if (inputErrorField) {
-                inputErrorField.textContent = input.dataset.error || inputTypes[type].error;
+                inputErrorField.textContent =
+                    input.dataset.formSubmitErrorMsg || input.dataset.error || inputTypes[type].error;
             }
             else {
                 console.warn(`Error message field not found for Input Name:${input.name}`);
@@ -389,7 +390,8 @@ const handleSelect = (input, cb) => {
         }
         const inputErrorField = input.parentNode.querySelector(errClassSelector);
         if (inputErrorField) {
-            inputErrorField.textContent = input.dataset.error || inputTypes[type].error;
+            inputErrorField.textContent =
+                input.dataset.formSubmitErrorMsg || input.dataset.error || inputTypes[type].error;
         }
         else {
             console.warn(`Error message field not found for Input Name:${input.name}`);
@@ -420,7 +422,9 @@ const handleRadiosCheckboxes = (input, cb) => {
         ? input.parentElement?.parentElement
         : input.parentElement;
     if (controlGroup && container) {
-        const isRequired = Array.from(controlGroup).find((el) => el.required) ? true : false;
+        const isRequired = Array.from(controlGroup).find((el) => el.dataset.formSubmitRequired || el.required)
+            ? true
+            : false;
         const valid = isRequired
             ? Array.from(controlGroup).filter((el) => el.checked === true).length > 0
                 ? true
@@ -432,7 +436,8 @@ const handleRadiosCheckboxes = (input, cb) => {
             }
             const inputErrorField = container.querySelector(errClassSelector);
             if (inputErrorField) {
-                inputErrorField.textContent = input.dataset.error || inputTypes[type].error;
+                inputErrorField.textContent =
+                    input.dataset.formSubmitErrorMsg || input.dataset.error || inputTypes[type].error;
             }
             else {
                 console.warn(`Error message field not found for Input Name:${input.name}`);
@@ -466,8 +471,7 @@ const controlRadios = (e) => {
     }
 };
 const handleInput = (input, cb) => {
-    const { type } = input.dataset || input;
-    const inputType = type === 'true' ? 'text' : input.dataset.type || input.type;
+    const inputType = resolveType(input);
     const isNull = input.value.trim().length === 0;
     const { required } = input;
     if (!cb) {
@@ -482,12 +486,16 @@ const handleInput = (input, cb) => {
             if (inputErrorField) {
                 const { error: errMsg } = input.dataset || inputTypes[inputType];
                 if (errMsg) {
-                    required && isNull
-                        ? (inputErrorField.textContent = errMsg)
-                        : required && !isNull && !inputTypes[inputType].value.test(input.value)
-                            ? (inputErrorField.textContent = errMsg)
-                            : !required && !isNull && !inputTypes[inputType].value.test(input.value)
-                                ? (inputErrorField.textContent = errMsg)
+                    (input.dataset.formSubmitRequired || required) && isNull
+                        ? (inputErrorField.textContent = input.dataset.formSubmitErrorMsg || errMsg)
+                        : (input.dataset.formSubmitRequired || required) &&
+                            !isNull &&
+                            !inputTypes[inputType].value.test(input.value)
+                            ? (inputErrorField.textContent = input.dataset.formSubmitErrorMsg || errMsg)
+                            : !(input.dataset.formSubmitRequired || required) &&
+                                !isNull &&
+                                !inputTypes[inputType].value.test(input.value)
+                                ? (inputErrorField.textContent = input.dataset.formSubmitErrorMsg || errMsg)
                                 : (inputErrorField.textContent = '');
                 }
                 else {
@@ -502,18 +510,28 @@ const handleInput = (input, cb) => {
         }
     }
     if (cb)
-        return required && isNull
+        return (input.dataset.formSubmitRequired || required) && isNull
             ? false
-            : required && !isNull && !inputTypes[inputType].value.test(input.value)
+            : (input.dataset.formSubmitRequired || required) &&
+                !isNull &&
+                !inputTypes[inputType].value.test(input.value)
                 ? false
-                : !required && !isNull && !inputTypes[inputType].value.test(input.value)
+                : !input.dataset.formSubmitRequired &&
+                    !required &&
+                    !isNull &&
+                    !inputTypes[inputType].value.test(input.value)
                     ? false
                     : true;
-    return required && isNull
+    return (input.dataset.formSubmitRequired || required) && isNull
         ? false
-        : required && !isNull && !inputTypes[inputType].value.test(input.value)
+        : (input.dataset.formSubmitRequired || required) &&
+            !isNull &&
+            !inputTypes[inputType].value.test(input.value)
             ? false
-            : !required && !isNull && !inputTypes[inputType].value.test(input.value)
+            : !input.dataset.formSubmitRequired &&
+                !required &&
+                !isNull &&
+                !inputTypes[inputType].value.test(input.value)
                 ? false
                 : true;
 };
@@ -550,11 +568,15 @@ const handleFileInput = (input, cb) => {
                     regexCheck.push(inputTypes.file.value.test(name));
                 }
                 if (errMsg) {
-                    required && files.length === 0
+                    (input.dataset.formSubmitRequired || required) && files.length === 0
                         ? (inputErrorField.textContent = errMsg)
-                        : required && files.length > 0 && fileTypeErr.length > 0
+                        : (input.dataset.formSubmitRequired || required) &&
+                            files.length > 0 &&
+                            fileTypeErr.length > 0
                             ? (inputErrorField.textContent = fileTypeErr.join('\r\n'))
-                            : !required && files.length > 0 && fileTypeErr.length > 0
+                            : (!input.dataset.formSubmitRequired || !required) &&
+                                files.length > 0 &&
+                                fileTypeErr.length > 0
                                 ? (inputErrorField.textContent = fileTypeErr.join('\r\n'))
                                 : (inputErrorField.textContent = '');
                 }
@@ -569,11 +591,16 @@ const handleFileInput = (input, cb) => {
     }
     if (cb) {
         if (files) {
-            return required && files.length === 0
+            return (input.dataset.formSubmitRequired || required) && files.length === 0
                 ? false
-                : required && files.length > 0 && !regexCheck.includes(false)
+                : (input.dataset.formSubmitRequired || required) &&
+                    files.length > 0 &&
+                    !regexCheck.includes(false)
                     ? false
-                    : !required && files.length > 0 && !regexCheck.includes(false)
+                    : !input.dataset.formSubmitRequired &&
+                        !required &&
+                        files.length > 0 &&
+                        !regexCheck.includes(false)
                         ? false
                         : true;
         }
@@ -584,8 +611,7 @@ const handleInputKeys = (evt) => {
     if (!target)
         return;
     if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
-        const { dataset } = target;
-        const type = (dataset.type || target.type) === 'true' ? 'text' : dataset.type || target.type;
+        const type = resolveType(target);
         if (!inputTypes[type].keys.test(key)) {
             evt.preventDefault();
         }
@@ -593,7 +619,7 @@ const handleInputKeys = (evt) => {
 };
 const appendErrEl = (el, isRadioCheckbox) => {
     const div = document.createElement('div');
-    div.classList.add('error');
+    div.classList.add('attention-text');
     !isRadioCheckbox ? el.insertAdjacentElement('afterend', div) : el.appendChild(div);
 };
 const addCounter = () => Counter.init++;
@@ -619,11 +645,7 @@ const initialize = () => {
             addCounter();
         }
         inputs.forEach((input) => {
-            const { type, dataset } = input;
-            const { type: dataType } = dataset;
-            const resolvedType = (dataType || type) === 'true'
-                ? (dataType || type).toLowerCase()
-                : (dataType || type).toLowerCase();
+            const resolvedType = resolveType(input);
             if (!['file', 'image', 'hidden', 'select-one', 'select-multiple', 'radio', 'checkbox'].includes(resolvedType)) {
                 !(input instanceof HTMLSelectElement) &&
                     !input.placeholder &&

@@ -22,10 +22,9 @@ const handleFormSubmit = (ev: SubmitEvent) => {
 };
 export const isValid = (el: FormInput | HTMLFormElement): boolean => {
   const tag = el.tagName.toLowerCase();
-  const type =
-    (el.dataset.type || el.type).toLowerCase() === 'true'
-      ? 'text'
-      : (el.dataset.type || el.type).toLowerCase();
+  (el.dataset.type || el.type).toLowerCase() === 'true'
+    ? 'text'
+    : (el.dataset.type || el.type).toLowerCase();
   if (el instanceof HTMLFormElement) {
     //Allows for passing in an entire FORM tag and validating all inputs where as checkAllValidity checks all forms on the page
     const inputs: FormInput[] = Array.from(
@@ -36,18 +35,20 @@ export const isValid = (el: FormInput | HTMLFormElement): boolean => {
     let isFormValid = true;
     inputs.forEach((input) => {
       const { required, name } = input;
+      const type = resolveType(input);
       const isValidInput = isValid(input);
       isValidInput
         ? console.log(
-            `Input Name: ${name}\r\nInput Type: ${type}\r\nRequired: ${required}\r\nisValid: ${isValid}`,
+            `Input Name: ${name}\r\nInput Type: ${type}\r\nRequired: ${required}\r\nisValid: ${isValid} \r\nDepricated form-submit-required: ${input.dataset.formSubmitRequired}`,
           )
         : console.error(
-            `Input Name: ${name}\r\nInput Type: ${type}\r\nRequired: ${required}\r\nisValid: ${isValid}`,
+            `Input Name: ${name}\r\nInput Type: ${type}\r\nRequired: ${required}\r\nisValid: ${isValid} \r\nDepricated form-submit-required: ${input.dataset.formSubmitRequired}`,
           );
       if (!isValidInput) isFormValid = false;
     });
     return isFormValid;
   } else {
+    const type = resolveType(el);
     if (!type) {
       throw new Error(`Invalid Element Type: ${tag}\r\nValid input elements only`);
     }
@@ -70,10 +71,7 @@ export const checkAllValidity = () => {
       ),
     );
     inputs.forEach((input) => {
-      const { type, dataset } = input;
-      const { type: dataType } = dataset;
-      const resolvedType =
-        (dataType || type).toLowerCase() === 'true' ? 'text' : (dataType || type).toLowerCase();
+      const resolvedType = resolveType(input);
       inputTypes[resolvedType].value.test(input.value)
         ? validInputs.push(input)
         : invalidInputs.push(input);
@@ -87,17 +85,18 @@ export const checkAllValidity = () => {
   console.groupEnd();
   return;
 };
+const resolveType = (el: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement) =>
+  (el.dataset.formSubmitRequired || el.dataset.formSubmitOptional || el.dataset.type || el.type) ===
+  'true'
+    ? 'text'
+    : el.dataset.formSubmitRequired || el.dataset.formSubmitOptional || el.dataset.type || el.type;
+
 const inputEventHandler: EventListenerOrEventListenerObject = (ev: FormInputEvent) => {
   const { target } = ev;
   if (target) {
     if (target instanceof HTMLSelectElement) handleSelect(target);
     if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
-      const { type, dataset } = target;
-      const { type: dataType } = dataset;
-      const resolvedType =
-        (dataType || type) === 'true'
-          ? (dataType || type).toLowerCase()
-          : (dataType || type).toLowerCase();
+      const resolvedType = resolveType(target);
       if (
         ['radio', 'checkbox'].includes(resolvedType) &&
         !(target instanceof HTMLTextAreaElement)
@@ -115,13 +114,13 @@ const inputEventHandler: EventListenerOrEventListenerObject = (ev: FormInputEven
 const handleSelect = (input: HTMLSelectElement, cb?: (() => void) | boolean) => {
   const { required, multiple } = input;
   const selections = input.selectedOptions;
-  const type = input.dataset.type || input.type || multiple ? 'select-multiple' : 'select-one'; //favor dataset value over native type (to allow for applying 'custom' application of formSubmit checks)
+  const type = resolveType(input); //favor dataset value over native type (to allow for applying 'custom' application of formSubmit checks)
   const val = multiple
     ? Array.from(selections)
         .map((selection) => selection.value)
         .join(',')
     : selections[0].value;
-  const valid = required ? (val ? true : false) : true;
+  const valid = input.dataset.formSubmitRequired || required ? (val ? true : false) : true;
   const parent = input.parentNode;
   if (!valid && !cb) {
     if (parent) {
@@ -130,7 +129,8 @@ const handleSelect = (input: HTMLSelectElement, cb?: (() => void) | boolean) => 
       } //if there is no error message field, create it
       const inputErrorField = parent.querySelector(errClassSelector); //finds to appropriate error field
       if (inputErrorField) {
-        inputErrorField.textContent = input.dataset.error || inputTypes[type].error;
+        inputErrorField.textContent =
+          input.dataset.formSubmitErrorMsg || input.dataset.error || inputTypes[type].error;
       } else {
         console.warn(`Error message field not found for Input Name:${input.name}`);
       }
@@ -139,7 +139,8 @@ const handleSelect = (input: HTMLSelectElement, cb?: (() => void) | boolean) => 
     }
     const inputErrorField = input.parentNode.querySelector(errClassSelector); //finds to appropriate error field
     if (inputErrorField) {
-      inputErrorField.textContent = input.dataset.error || inputTypes[type].error;
+      inputErrorField.textContent =
+        input.dataset.formSubmitErrorMsg || input.dataset.error || inputTypes[type].error;
     } else {
       console.warn(`Error message field not found for Input Name:${input.name}`);
     }
@@ -171,7 +172,11 @@ const handleRadiosCheckboxes = (input: HTMLInputElement, cb?: (() => void) | boo
       ? input.parentElement?.parentElement
       : input.parentElement;
   if (controlGroup && container) {
-    const isRequired = Array.from(controlGroup).find((el) => el.required) ? true : false; //Checks if any of the group has a required attribute
+    const isRequired = Array.from(controlGroup).find(
+      (el) => el.dataset.formSubmitRequired || el.required,
+    )
+      ? true
+      : false; //Checks if any of the group has a required attribute
     const valid = isRequired
       ? Array.from(controlGroup).filter((el) => el.checked === true).length > 0
         ? true
@@ -183,7 +188,8 @@ const handleRadiosCheckboxes = (input: HTMLInputElement, cb?: (() => void) | boo
       }
       const inputErrorField = container.querySelector(errClassSelector);
       if (inputErrorField) {
-        inputErrorField.textContent = input.dataset.error || inputTypes[type].error;
+        inputErrorField.textContent =
+          input.dataset.formSubmitErrorMsg || input.dataset.error || inputTypes[type].error;
       } else {
         console.warn(`Error message field not found for Input Name:${input.name}`);
       }
@@ -224,8 +230,7 @@ const handleInput = (
   input: HTMLInputElement | HTMLTextAreaElement,
   cb?: (() => void) | boolean,
 ) => {
-  const { type } = input.dataset || input;
-  const inputType = type === 'true' ? 'text' : input.dataset.type || input.type; //favor dataset value over native type (to allow for applying 'custom' application of formSubmit checks)
+  const inputType = resolveType(input); //favor dataset value over native type (to allow for applying 'custom' application of formSubmit checks)
   const isNull = input.value.trim().length === 0; //Checks if a value was entered
   const { required } = input;
   if (!cb) {
@@ -239,12 +244,16 @@ const handleInput = (
       if (inputErrorField) {
         const { error: errMsg } = input.dataset || inputTypes[inputType];
         if (errMsg) {
-          required && isNull
-            ? (inputErrorField.textContent = errMsg) //if required and has no value
-            : required && !isNull && !inputTypes[inputType].value.test(input.value)
-              ? (inputErrorField.textContent = errMsg) //if required and has an invalid value
-              : !required && !isNull && !inputTypes[inputType].value.test(input.value)
-                ? (inputErrorField.textContent = errMsg)
+          (input.dataset.formSubmitRequired || required) && isNull
+            ? (inputErrorField.textContent = input.dataset.formSubmitErrorMsg || errMsg) //if required and has no value
+            : (input.dataset.formSubmitRequired || required) &&
+                !isNull &&
+                !inputTypes[inputType].value.test(input.value)
+              ? (inputErrorField.textContent = input.dataset.formSubmitErrorMsg || errMsg) //if required and has an invalid value
+              : !(input.dataset.formSubmitRequired || required) &&
+                  !isNull &&
+                  !inputTypes[inputType].value.test(input.value)
+                ? (inputErrorField.textContent = input.dataset.formSubmitErrorMsg || errMsg)
                 : (inputErrorField.textContent = ''); //if not required but has an invalid value
           //Remove the error field if there is no error, reduces impact to CSS
         } else {
@@ -257,18 +266,28 @@ const handleInput = (
     }
   }
   if (cb)
-    return required && isNull
+    return (input.dataset.formSubmitRequired || required) && isNull
       ? false
-      : required && !isNull && !inputTypes[inputType].value.test(input.value)
+      : (input.dataset.formSubmitRequired || required) &&
+          !isNull &&
+          !inputTypes[inputType].value.test(input.value)
         ? false
-        : !required && !isNull && !inputTypes[inputType].value.test(input.value)
+        : !input.dataset.formSubmitRequired &&
+            !required &&
+            !isNull &&
+            !inputTypes[inputType].value.test(input.value)
           ? false
           : true;
-  return required && isNull
+  return (input.dataset.formSubmitRequired || required) && isNull
     ? false
-    : required && !isNull && !inputTypes[inputType].value.test(input.value)
+    : (input.dataset.formSubmitRequired || required) &&
+        !isNull &&
+        !inputTypes[inputType].value.test(input.value)
       ? false
-      : !required && !isNull && !inputTypes[inputType].value.test(input.value)
+      : !input.dataset.formSubmitRequired &&
+          !required &&
+          !isNull &&
+          !inputTypes[inputType].value.test(input.value)
         ? false
         : true;
 };
@@ -308,11 +327,15 @@ const handleFileInput = (input: HTMLInputElement, cb?: (() => void) | boolean) =
           regexCheck.push(inputTypes.file.value.test(name));
         }
         if (errMsg) {
-          required && files.length === 0
+          (input.dataset.formSubmitRequired || required) && files.length === 0
             ? (inputErrorField.textContent = errMsg)
-            : required && files.length > 0 && fileTypeErr.length > 0
+            : (input.dataset.formSubmitRequired || required) &&
+                files.length > 0 &&
+                fileTypeErr.length > 0
               ? (inputErrorField.textContent = fileTypeErr.join('\r\n'))
-              : !required && files.length > 0 && fileTypeErr.length > 0
+              : (!input.dataset.formSubmitRequired || !required) &&
+                  files.length > 0 &&
+                  fileTypeErr.length > 0
                 ? (inputErrorField.textContent = fileTypeErr.join('\r\n'))
                 : (inputErrorField.textContent = '');
         } else {
@@ -325,11 +348,16 @@ const handleFileInput = (input: HTMLInputElement, cb?: (() => void) | boolean) =
   }
   if (cb) {
     if (files) {
-      return required && files.length === 0
+      return (input.dataset.formSubmitRequired || required) && files.length === 0
         ? false
-        : required && files.length > 0 && !regexCheck.includes(false)
+        : (input.dataset.formSubmitRequired || required) &&
+            files.length > 0 &&
+            !regexCheck.includes(false)
           ? false
-          : !required && files.length > 0 && !regexCheck.includes(false)
+          : !input.dataset.formSubmitRequired &&
+              !required &&
+              files.length > 0 &&
+              !regexCheck.includes(false)
             ? false
             : true;
     }
@@ -340,9 +368,8 @@ const handleInputKeys: EventListenerOrEventListenerObject = (evt) => {
   const { key, target } = evt as KeyboardEvent; //get the key code from the event
   if (!target) return;
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
-    const { dataset } = target;
     ///////Need to write code to handle copy and paste shortcuts
-    const type = (dataset.type || target.type) === 'true' ? 'text' : dataset.type || target.type; //sets the input type
+    const type = resolveType(target); //sets the input type
     if (!inputTypes[type].keys.test(key)) {
       evt.preventDefault();
     } //passes key code through regex of allowed keys, if not allowed, no action is taken
@@ -351,7 +378,7 @@ const handleInputKeys: EventListenerOrEventListenerObject = (evt) => {
 //If there is no client side error field, create one and add as a sibling to input
 const appendErrEl = (el: FormInput | HTMLFormElement | HTMLElement, isRadioCheckbox?: boolean) => {
   const div = document.createElement('div'); //Create a div element
-  div.classList.add('error'); //applies class to div element
+  div.classList.add('attention-text'); //applies class to div element
   !isRadioCheckbox ? el.insertAdjacentElement('afterend', div) : el.appendChild(div); //places the div element next to its respective input
 };
 //Counts all inputs on load and compares count on final to protect against injection
@@ -385,12 +412,7 @@ export const initialize = () => {
       addCounter();
     }
     inputs.forEach((input: FormInput) => {
-      const { type, dataset } = input;
-      const { type: dataType } = dataset;
-      const resolvedType =
-        (dataType || type) === 'true'
-          ? (dataType || type).toLowerCase()
-          : (dataType || type).toLowerCase(); //favor dataset value over native type (to allow for applying 'custom' application of formSubmit checks)
+      const resolvedType = resolveType(input); //favor dataset value over native type (to allow for applying 'custom' application of formSubmit checks)
       if (
         !['file', 'image', 'hidden', 'select-one', 'select-multiple', 'radio', 'checkbox'].includes(
           resolvedType,
