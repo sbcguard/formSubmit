@@ -341,7 +341,17 @@ const handleFileInput = (input: HTMLInputElement, cb?: (() => void) | boolean) =
         } else {
           throw new Error(`Error initializing error message value for Input Name: ${input.name}`);
         }
-        if (fileTypeErr.length > 0) input.value = '';
+        if (fileTypeErr.length > 0) {
+          input.value = '';
+        } else {
+          const dataTransfer = new DataTransfer();
+          for (const file of Array.from(files)) {
+            //Strips special characters from file name
+            dataTransfer.items.add(modifyFile(file));
+          }
+          //Place files with name names back into the input
+          input.files = dataTransfer.files;
+        }
       }
       inputErrorField.textContent === '' && inputErrorField.remove();
     }
@@ -362,6 +372,37 @@ const handleFileInput = (input: HTMLInputElement, cb?: (() => void) | boolean) =
             : true;
     }
   }
+};
+//Update file name to strip hidden special characters
+const modifyFile = (file: File) => {
+  try {
+    // Check if the input is a File object
+    if (file instanceof File) {
+      // Create a new File object with modified name and original type
+      return new File([file], removeSpecialChars(file.name), { type: file.type });
+    } else {
+      // Throw an error if the input is not a File object
+      throw new Error('Input is not a valid File object.');
+    }
+  } catch (error: any) {
+    // Handle the error
+    throw new Error(`Error in modifyFile: ${error.message}`);
+  }
+};
+const removeSpecialChars = (string: string) => {
+  const regex = new RegExp('[^\\w\\s~`!@#$%^&*()=+/\\\\|{}[]:;"\'<>,.?\\u2014-]', 'gi');
+  return string
+    .replace(/\u00e9/g, 'e')
+    .replace(/[\u2018\u2019\u201A]/g, "'")
+    .replace(/[\u201C\u201D\u201E]/g, '"')
+    .replace(/\u2026/g, '...')
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/\u02C6/g, '^')
+    .replace(/\u2039/g, '<')
+    .replace(/\u203A/g, '>')
+    .replace(/[\u02DC\u00A0]/g, ' ')
+    .replace(/[\u202F]/g, ' ')
+    .replace(regex, '');
 };
 //Based on input type, limits what keys are allowed
 const handleInputKeys: EventListenerOrEventListenerObject = (evt) => {
